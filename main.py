@@ -18,7 +18,7 @@ def calculate_loss_print_and_save_data(name: str, LRM: LinearRegressionModel, da
     )
 
 
-# %% load data organizing
+# %% load data
 dataset = pd.read_csv('Salary_Data.csv')
 x_train = dataset.iloc[:, 0].values
 y_train = dataset.iloc[:, 1].values
