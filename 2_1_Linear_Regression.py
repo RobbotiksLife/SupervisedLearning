@@ -29,13 +29,16 @@ LRM.update_data(
     training_output=list(y_train)
 )
 
+# LRM.b0 = 20000
 # %% test learning
 loss_history = LRM.learn(
     epochs=7500,
-    learning_factor=0.001,
+    learning_factor=0.01,
     data_necessity_type=DataNecessityType.TRAINING
 )
 calculate_loss_print_and_save_data("plot_linear_regression_after_learning", LRM)
+# %% visualize  history of learning
+LRM.plot_loss_history(loss_history)
 
 # %% setting to zero
 LRM.b0 = 0
@@ -46,10 +49,27 @@ calculate_loss_print_and_save_data("plot_linear_regression_after_resetting_param
 LRM.define_mathematically_ideal_params()
 calculate_loss_print_and_save_data("plot_linear_regression_mathematically_ideal_params", LRM)
 
+
+data_necessity_type = DataNecessityType.TRAINING
+dataset_with_defined_data_necessity_type = LRM.dataset.get(data_necessity_type)
+n, Ex, Ey, Exx, Exy = LRM.define_learning_data(dataset_with_defined_data_necessity_type)
+
 # %% visualize loss function surface and history of learning
-# LRM.visualize_loss_surface(data_necessity_type=DataNecessityType.TRAINING, history_points=loss_history[::50])
+LRM.visualize_3d_b0_l1_loss_dependency(
+    function=lambda b1, b0: LRM.loss_function(b0, b1, data_necessity_type),
+    history_points=loss_history[::50],
+    name="Loss Surface Visualization"
+)
 
-# %% visualize  history of learning
-LRM.plot_loss_history(loss_history)
+LRM.visualize_3d_b0_l1_loss_dependency(
+    function=lambda b1, b0: LRM.b0_derivative_on_loss(b0, b1, n, Ex, Ey),
+    history_points=loss_history[::50],
+    name="B1 Derivation Surface Visualization"
+)
 
-LRM.try_visualize_loss_surface_b1_derivative(data_necessity_type=DataNecessityType.TRAINING, history_points=loss_history[::10])
+LRM.visualize_3d_b0_l1_loss_dependency(
+    function=lambda b1, b0: LRM.b1_derivative_on_loss(b0, b1, n, Exx, Ex, Exy),
+    history_points=loss_history[:4:1],
+    name="B0 Derivation Surface Visualization"
+)
+
