@@ -160,10 +160,81 @@ class LinearRegressionModel(MachineLearningModel):
                           ))
         fig.show()
 
-    def show_loss_history(self, data_list):
+
+    def try_visualize_loss_surface_b1_derivative(
+            self,
+            data_necessity_type,
+            history_points,
+            squared_range_value_b0=500000,
+            squared_range_value_b1=50000,
+            quality_factor=0.01
+    ):
+        dataset_with_defined_data_necessity_type = self.dataset.get(data_necessity_type)
+        n, Ex, Ey, Exx, Exy = self.define_learning_data(dataset_with_defined_data_necessity_type)
+        # Generate b0, b1 grid
+        b0_range = np.arange(-squared_range_value_b0, squared_range_value_b0, squared_range_value_b0*quality_factor)
+        b1_range = np.arange(-squared_range_value_b1, squared_range_value_b1, squared_range_value_b1*quality_factor)
+        b0_grid, b1_grid = np.meshgrid(b0_range, b1_range)
+
+        # Compute loss for each combination of b0 and b1
+        loss_values = np.zeros_like(b0_grid)
+        for i in tqdm(range(len(b0_range))):
+            for j in range(len(b1_range)):
+                loss_values[j, i] = 2/n * (b1_range[j]*Exx + b0_range[i]*Ex - Exy) # self.loss_function(b0_range[i], b1_range[j], data_necessity_type)
+                # loss_values[j, i] = 2/n * (b1_range[j]*Ex + n*b0_range[j] - Ey)
+
+        # Find the minimum point
+        min_indices = np.where(np.abs(loss_values) < 50) #100150
+        min_b0_values = b0_range[min_indices[1]]
+        min_b1_values = b1_range[min_indices[0]]
+        # min_loss_values = loss_values[min_indices]
+        min_loss_values = []
+        for i in range(len(min_b0_values)):
+            min_loss_values.append(2/n * (min_b1_values[i]*Exx + min_b0_values[i]*Ex - Exy))
+
+        # Create surface plot
+        fig = go.Figure(data=[go.Surface(x=b0_range, y=b1_range, z=loss_values)])
+
+        # Plot the points close to 0
+        fig.add_trace(go.Scatter3d(x=min_b0_values, y=min_b1_values, z=min_loss_values, mode='markers',
+                                       marker=dict(size=5, color='yellow'), name='Close to 0'))
+
+        # Add history points
+        for i in range(len(history_points)):
+            point = history_points[i]
+            b0 = point['B0']
+            b1 = point['B1']
+            loss = (2/n * (point['B1']*Exx + point['B0']*Ex - Exy))
+            fig.add_trace(go.Scatter3d(x=[b0], y=[b1], z=[loss], mode='markers', marker=dict(size=5, color='red'), name='HP'))
+            if i > 0:
+                prev_point = history_points[i-1]
+                fig.add_trace(go.Scatter3d(x=[prev_point['B0'], b0], y=[prev_point['B1'], b1], z=[(2/n * (prev_point['B1']*Exx + prev_point['B0']*Ex - Exy)), loss],
+                                           mode='lines', line=dict(width=2, color='red'), name='M'))
+
+            # Connect history point to surface with lines
+            fig.add_trace(go.Scatter3d(
+                x=[b0, b0],
+                y=[b1, b1],
+                z=[loss, 0],
+                mode='lines',
+                line=dict(color='blue', width=1),
+                showlegend=False
+            ))
+
+
+
+        fig.update_layout(title='Loss Surface Visualization',
+                          scene=dict(
+                              xaxis_title='b0',
+                              yaxis_title='b1',
+                              zaxis_title='Loss\''
+                          ))
+        fig.show()
+
+    def plot_loss_history(self, history_list):
         # Extract values
-        epochs = [i for i in range(len(data_list))]
-        epoch_loss = [point['epoch_loss'] for point in data_list]
+        epochs = [i for i in range(len(history_list))]
+        epoch_loss = [point['epoch_loss'] for point in history_list]
         # Plotting the data
         plt.figure(figsize=(10, 6))
         plt.plot(epochs, epoch_loss, marker='o', color='b', label='Loss per Epoch')
