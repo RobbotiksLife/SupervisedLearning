@@ -1,5 +1,10 @@
 from MachineLearningModel import *
 
+import numpy as np
+import plotly.graph_objs as go
+from tqdm import tqdm
+import matplotlib.pyplot as plt
+
 
 class LinearRegressionModel(MachineLearningModel):
     def __init__(self, start_b0: float = 0, start_b1: float = 0):
@@ -65,7 +70,7 @@ class LinearRegressionModel(MachineLearningModel):
                 b0=b0,
                 b1=b1
             )
-            e = (predicted_y - dataset_with_defined_data_necessity_type.output_data[i]) ** 2
+            e += (predicted_y - dataset_with_defined_data_necessity_type.output_data[i]) ** 2
         return e / dataset_with_defined_data_necessity_type.data_len
 
     @staticmethod
@@ -91,3 +96,89 @@ class LinearRegressionModel(MachineLearningModel):
     @staticmethod
     def _prediction_function_str(b0: float, b1: float):
         return f"y = {b0} + {b1}*x"
+
+    def visualize_loss_surface(
+            self,
+            data_necessity_type,
+            history_points,
+            squared_range_value_b0=500000,
+            squared_range_value_b1=50000,
+            quality_factor=0.01
+    ):
+        # Generate b0, b1 grid
+        b0_range = np.arange(-squared_range_value_b0, squared_range_value_b0, squared_range_value_b0*quality_factor)
+        b1_range = np.arange(-squared_range_value_b1, squared_range_value_b1, squared_range_value_b1*quality_factor)
+        b0_grid, b1_grid = np.meshgrid(b0_range, b1_range)
+
+        # Compute loss for each combination of b0 and b1
+        loss_values = np.zeros_like(b0_grid)
+        for i in tqdm(range(len(b0_range))):
+            for j in range(len(b1_range)):
+                loss_values[j, i] = self.loss_function(b0_range[i], b1_range[j], data_necessity_type)
+
+        # Find the minimum point
+        min_index = np.unravel_index(loss_values.argmin(), loss_values.shape)
+        min_b0 = b0_range[min_index[1]]
+        min_b1 = b1_range[min_index[0]]
+        min_loss = loss_values[min_index]
+
+        # Create surface plot
+        fig = go.Figure(data=[go.Surface(x=b0_range, y=b1_range, z=loss_values)])
+
+
+        # Add history points
+        for i in range(len(history_points)):
+            point = history_points[i]
+            b0 = point['B0']
+            b1 = point['B1']
+            loss = point['epoch_loss']
+            fig.add_trace(go.Scatter3d(x=[b0], y=[b1], z=[loss], mode='markers', marker=dict(size=5, color='red'), name='HP'))
+            if i > 0:
+                prev_point = history_points[i-1]
+                fig.add_trace(go.Scatter3d(x=[prev_point['B0'], b0], y=[prev_point['B1'], b1], z=[prev_point['epoch_loss'], loss],
+                                           mode='lines', line=dict(width=2, color='red'), name='M'))
+
+            # Connect history point to surface with lines
+            fig.add_trace(go.Scatter3d(
+                x=[b0, b0],
+                y=[b1, b1],
+                z=[loss, 0],
+                mode='lines',
+                line=dict(color='blue', width=1),
+                showlegend=False
+            ))
+
+        # Add the minimum point
+        fig.add_trace(go.Scatter3d(x=[min_b0], y=[min_b1], z=[min_loss], mode='markers', marker=dict(size=10, color='yellow'), name='Minimum Point'))
+
+
+        fig.update_layout(title='Loss Surface Visualization',
+                          scene=dict(
+                              xaxis_title='b0',
+                              yaxis_title='b1',
+                              zaxis_title='Loss'
+                          ))
+        fig.show()
+
+    def show_loss_history(self, data_list):
+        # Extract values
+        epochs = [i for i in range(len(data_list))]
+        epoch_loss = [point['epoch_loss'] for point in data_list]
+        # Plotting the data
+        plt.figure(figsize=(10, 6))
+        plt.plot(epochs, epoch_loss, marker='o', color='b', label='Loss per Epoch')
+        plt.title('Loss per Epoch')
+        plt.xlabel('Epoch')
+        plt.ylabel('Loss')
+        plt.legend()
+        plt.grid(True)
+        plt.savefig('plot_loss_history.png')
+
+    def define_linear_regression_plot(self, x_data, y_data, b0, b1, name, format="png", range=range(0, 12)):
+        plt.figure()
+        plt.scatter(x_data, y_data, color='red')
+        plt.plot(range, [b1*x + b0 for x in range], color="black")
+        plt.title(name)
+        plt.xlabel('Experience in years')
+        plt.ylabel('Salary')
+        plt.savefig(f'{name}.{format}')
