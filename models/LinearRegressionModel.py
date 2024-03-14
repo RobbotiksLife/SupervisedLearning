@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 
 
 class LinearRegressionModel(MachineLearningModel):
-    def __init__(self, start_b0: float = 0, start_b1: float = 0):
+    def __init__(self, start_b0: float = 0, start_b1: float = 1):
         super().__init__()
         self.b0: float = start_b0
         self.b1: float = start_b1
@@ -52,6 +52,25 @@ class LinearRegressionModel(MachineLearningModel):
             b0=self.b0,
             b1=self.b1
         )
+
+    def r_squared(self, data_necessity_type: DataNecessityType = DataNecessityType.TRAINING):
+        loss_b0_only = self.loss_function(
+            b0=self.b0,
+            b1=0,
+            data_necessity_type=data_necessity_type
+        )
+        loss_b0_b1 = self.loss_function(
+            b0=self.b0,
+            b1=self.b1,
+            data_necessity_type=data_necessity_type
+        )
+        return (loss_b0_only - loss_b0_b1) / loss_b0_only
+
+    def r_squared_str(self, data_necessity_type: DataNecessityType = DataNecessityType.TRAINING):
+        return f"R^2 for {self.prediction_function_str()} is {self.r_squared(data_necessity_type=data_necessity_type)}"
+
+    def __str__(self):
+        return f"<LinearRegressionModel | {self.prediction_function_str()}>"
 
     def define_mathematically_ideal_params(self, data_necessity_type: DataNecessityType = DataNecessityType.TRAINING):
         dataset_with_defined_data_necessity_type = self.dataset.get(data_necessity_type)
@@ -102,7 +121,7 @@ class LinearRegressionModel(MachineLearningModel):
     # /// ----------------------------- PLOTTING ----------------------------- ///
 
     @staticmethod
-    def visualize_3d_b0_l1_loss_dependency(
+    def visualize_3d_b0_b1_loss_dependency(
             function,
             history_points,
             name,
