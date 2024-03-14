@@ -208,3 +208,13 @@ class LinearRegressionModel(MachineLearningModel):
         plt.xlabel('Experience in years')
         plt.ylabel('Salary')
         plt.savefig(f'{name}.{format}')
+
+
+    def define_plot_test(self, x_data, y_data, b0, b1, name, format="png", range=range(0, 12)):
+        plt.figure()
+        plt.scatter(x_data, y_data, color='red')
+        plt.plot(range, [b1*x + b0 for x in range], color="black")
+        plt.title(name)
+        plt.xlabel('Experience in years')
+        plt.ylabel('Salary')
+        plt.savefig(f'{name}.{format}')
