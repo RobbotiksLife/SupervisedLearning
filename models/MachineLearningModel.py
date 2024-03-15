@@ -6,12 +6,14 @@ class MachineLearningModel:
     def __init__(self):
         self.dataset: Dict[DataNecessityType, DataSetObject] = {}
 
-    def update_data(self,
-            training_input: Optional[List[Any]] = None,
-            training_output: Optional[List[Any]] = None,
-            testing_input: Optional[List[Any]] = None,
-            testing_output: Optional[List[Any]] = None) -> None:
+    def _update_data(self,
+            training_input: Optional[Dict[str, List[float]]] = None,
+            testing_input: Optional[Dict[str, List[float]]] = None,
+            training_output: Optional[List[float]] = None,
+            testing_output: Optional[List[float]] = None) -> None:
         ignore_on_dataset_init_errors: Tuple = (DataSetValuesIsNoneTypeError, )
+        if training_input is not None and testing_input is not None and len(training_input.values()) == len(testing_input.values()):
+            raise ValueError("training_output shape should be same as testing_output")
 
         training_data_necessity_type = DataNecessityType.TRAINING
         training_dataset = DataSetObject(
