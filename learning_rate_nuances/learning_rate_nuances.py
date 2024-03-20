@@ -5,14 +5,6 @@ import numpy as np
 PLOT_TITLE = 'Gradient Descent Optimization'
 
 
-def loss_function_x_cubed(x):
-    return x ** 3
-
-
-def gradient_x_cubed(x):
-    return 3 * x
-
-
 def define_plot(function, x_values, plot_filename, plot_path="", title=PLOT_TITLE):
     plt.figure(figsize=(10, 6))
     border: int = 2

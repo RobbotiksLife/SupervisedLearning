@@ -136,28 +136,28 @@ def students_performance():
     # y prediction
     PerformanceIndex = list(dataset.iloc[:, 5].values)
 
-    # %% define data
-    LRM = LinearRegressionModel()
-    LRM.update_data(
-        training_input={
-            "PreviousScores": PreviousScores[:5],
-            # "HoursStudied": HoursStudied[:5],
-            # "RandomData": [random.random() for _ in range(len(PerformanceIndex))][:5],
-            # "ExtracurricularActivities": ExtracurricularActivities[:5],
-            # "SleepHours": SleepHours[:5],
-            # "SampleQuestionPapersPracticed": SampleQuestionPapersPracticed[:5],
-        },
-        training_output=PerformanceIndex[:5]
-    )
-
-    # %% learning
-    loss_history = LRM.learn(
-        epochs=150,
-        learning_factor=None,
-        data_necessity_type=DataNecessityType.TRAINING,
-        epoch_history_save_interval=10
-    )
-    LRM.plot_loss_history(loss_history, "")
+    # # %% define data
+    # LRM = LinearRegressionModel()
+    # LRM.update_data(
+    #     training_input={
+    #         "PreviousScores": PreviousScores[:15],
+    #         "HoursStudied": HoursStudied[:15],
+    #         # "RandomData": [random.random() for _ in range(len(PerformanceIndex))][:5],
+    #         # "ExtracurricularActivities": ExtracurricularActivities[:5],
+    #         # "SleepHours": SleepHours[:5],
+    #         # "SampleQuestionPapersPracticed": SampleQuestionPapersPracticed[:5],
+    #     },
+    #     training_output=PerformanceIndex[:15]
+    # )
+    #
+    # # %% learning
+    # loss_history = LRM.learn(
+    #     epochs=150,
+    #     learning_factor=None,
+    #     data_necessity_type=DataNecessityType.TRAINING,
+    #     epoch_history_save_interval=10
+    # )
+    # LRM.plot_loss_history(loss_history, "")
 
 
     # Load model
@@ -176,31 +176,6 @@ def students_performance():
     #     b1=LRM.b_params[1],
     #     name="performance"
     # )
-
-    name = "performance_t"
-    format = "png"
-    data_necessity_type: DataNecessityType = DataNecessityType.TRAINING
-    dataset_with_defined_data_necessity_type = LRM.dataset.get(data_necessity_type)
-    # min_point = int(min(x_data))
-    # max_point = int(max(x_data))
-    # r = range(min_point, max_point)
-    x_values = PreviousScores[:5]
-    y_values = PerformanceIndex[:5]
-
-    r = range(len(x_values))
-    plt.figure()
-    plt.scatter(x_values, y_values, color='red')
-    plt.plot(x_values, [LRM.prediction_function(
-        xs=extract_values_by_index(
-            data=dataset_with_defined_data_necessity_type.input_data,
-            index_to_extract=i
-        ),
-        b_params=LRM.b_params
-    ) for i in r], color="black")
-    plt.title(name)
-    plt.xlabel('X')
-    plt.ylabel('Y')
-    plt.savefig(f'{name}.{format}')
 
     with open('students_performance_lrm.pkl', 'wb') as f:
         pickle.dump(LRM, f)
