@@ -46,21 +46,21 @@ def custom_x_y_dataset_data_test():
         data_necessity_type=DataNecessityType.TRAINING,
         epoch_history_save_interval=1
     )
-    LRM.plot_loss_history(loss_history, model_description_str="_glm_custom_x_y_dataset_data_test_normal_exp")
+    LRM.plot_loss_history(loss_history, model_description_str="_glm_custom_x_y_dataset_data_test_poisson_exp")
 
     LRM.plot_performance(
         x_data=x_train_1,
         y_data=y_train,
         b0=LRM.b0,
         b1=LRM.b1,
-        name="performance_glm_custom_x_y_dataset_data_test_normal_exp",
+        name="performance_glm_custom_x_y_dataset_data_test_poisson_exp",
         padding_interval=3
     )
 
     n = 0.5
     LRM.plot_b0_dependency_from_loss(
         r=float_range(LRM.b0 - n, LRM.b0 + n, 0.01),
-        name="b0_loss_dependency_derivative_glm_custom_x_y_dataset_data_test_normal_exp"
+        name="b0_loss_dependency_derivative_glm_custom_x_y_dataset_data_test_poisson_exp"
     )
 
 def custom_x_y_dataset_data_test_2():
@@ -88,14 +88,14 @@ def custom_x_y_dataset_data_test_2():
         data_necessity_type=DataNecessityType.TRAINING,
         epoch_history_save_interval=1
     )
-    LRM.plot_loss_history(loss_history, model_description_str="_glm_custom_x_y_dataset_data_test_2_normal_exp")
+    LRM.plot_loss_history(loss_history, model_description_str="_glm_custom_x_y_dataset_data_test_2_poisson_exp")
 
     LRM.plot_performance(
         x_data=x_train_1,
         y_data=y_train,
         b0=LRM.b0,
         b1=LRM.b1,
-        name="performance_glm_custom_x_y_dataset_data_test_2_normal_exp",
+        name="performance_glm_custom_x_y_dataset_data_test_2_poisson_exp",
         padding_interval=3,
         step_quality=0.01
     )
@@ -103,7 +103,7 @@ def custom_x_y_dataset_data_test_2():
     n = 0.5
     LRM.plot_b0_dependency_from_loss(
         r=float_range(LRM.b0 - n, LRM.b0 + n, 0.01),
-        name="b0_loss_dependency_derivative_glm_custom_x_y_dataset_data_test_2_normal_exp"
+        name="b0_loss_dependency_derivative_glm_custom_x_y_dataset_data_test_2_poisson_exp"
     )
 
 def sales_data():
@@ -131,14 +131,14 @@ def sales_data():
         data_necessity_type=DataNecessityType.TRAINING,
         epoch_history_save_interval=1
     )
-    LRM.plot_loss_history(loss_history, model_description_str="_glm_sales_data_x_y_test_normal_exp")
+    LRM.plot_loss_history(loss_history, model_description_str="_glm_sales_data_x_y_test_poisson_exp")
 
     LRM.plot_performance(
         x_data=x_train_1,
         y_data=y_train,
         b0=LRM.b0,
         b1=LRM.b1,
-        name="performance_glm_sales_data_x_y_test_normal_exp",
+        name="performance_glm_sales_data_x_y_test_poisson_exp",
         padding_interval=0,
         step_quality=0.01
     )

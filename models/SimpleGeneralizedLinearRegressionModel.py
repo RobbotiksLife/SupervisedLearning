@@ -59,7 +59,8 @@ class SimpleGeneralizedLinearRegressionModel(MachineLearningModel):
             y = dataset_with_defined_data_necessity_type.output_data[i]
             x = dataset_with_defined_data_necessity_type.input_data[0][i]
 
-            result += -2*(y*math.exp(b0+b1*x) - math.exp(2*b0+2*b1*x))
+            # result += -2*(y*math.exp(b0+b1*x) - math.exp(2*b0+2*b1*x))  # Normal d/db0(d(y, m))
+            result += -2*(y - math.exp(b0+b1*x))  # Poisson d/db0(d(y, m))
         return result
 
     @staticmethod
@@ -70,7 +71,8 @@ class SimpleGeneralizedLinearRegressionModel(MachineLearningModel):
             y = dataset_with_defined_data_necessity_type.output_data[i]
             x = dataset_with_defined_data_necessity_type.input_data[0][i]
 
-            result += -2 * (y * x * math.exp(b0 + b1 * x) - x * math.exp(2 * b0 + 2 * b1 * x))
+            # result += -2 * (y * x * math.exp(b0 + b1 * x) - x * math.exp(2 * b0 + 2 * b1 * x))  # Normal d/db1(d(y, m))
+            result += -2 * x * (y - math.exp(b0 + b1 * x))  # Poisson d/db1(d(y, m))
         return result
 
 
@@ -82,7 +84,8 @@ class SimpleGeneralizedLinearRegressionModel(MachineLearningModel):
             y = dataset_with_defined_data_necessity_type.output_data[i]
             x = dataset_with_defined_data_necessity_type.input_data[0][i]
 
-            result += -2*(y*math.exp(b0+b1*x) - 2*math.exp(2*b0+2*b1*x))
+            # result += -2*(y*math.exp(b0+b1*x) - 2*math.exp(2*b0+2*b1*x))  # Normal d/db0^2(d(y, m))
+            result += 2 * math.exp(b0 + b1 * x)  # Poisson d/db0^2(d(y, m))
         return result
 
     @staticmethod
@@ -93,7 +96,8 @@ class SimpleGeneralizedLinearRegressionModel(MachineLearningModel):
             y = dataset_with_defined_data_necessity_type.output_data[i]
             x = dataset_with_defined_data_necessity_type.input_data[0][i]
 
-            result += -2*(y*math.pow(x, 2)*math.exp(b0+b1*x) - 2*math.pow(x, 2)*math.exp(2*b0+2*b1*x))
+            # result += -2*(y*math.pow(x, 2)*math.exp(b0+b1*x) - 2*math.pow(x, 2)*math.exp(2*b0+2*b1*x))  # Normal d/db1^2(d(y, m))
+            result += 2 * math.pow(x, 2) * math.exp(b0 + b1 * x)  # Poisson d/db1^2(d(y, m))
         return result
 
     # @staticmethod
@@ -118,8 +122,8 @@ class SimpleGeneralizedLinearRegressionModel(MachineLearningModel):
                 b0=b0,
                 b1=b1
             )
-            e += (predicted_y - y) ** 2
-            # e -= 2 * (y * predicted_y - math.pow(predicted_y, 2)/2)
+            # e += (predicted_y - y) ** 2  # Normal d(y, m)
+            e += 2 * (y * (math.log(y/predicted_y) - 1) + predicted_y)  # Poisson d(y, m)
         return e
 
     @staticmethod
