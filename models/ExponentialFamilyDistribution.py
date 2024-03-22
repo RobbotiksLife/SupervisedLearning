@@ -19,6 +19,12 @@ class ExponentialFamilyDistribution:
     def t_function(self, y, m):
         raise NotImplementedError("Subclasses must implement t_function function")
 
+    # def t_function_derivative(self, y, m):
+    #     raise NotImplementedError("Subclasses must implement t_function function")
+
+    def d_function(self, y, m):
+        return 2 * (self.t_function(y, y) - self.t_function(y, m))
+
     def count(self, *args, **kwargs):
         raise NotImplementedError("Subclasses must implement count function")
 
@@ -41,6 +47,12 @@ class NormalDistribution(ExponentialFamilyDistribution):
 
     def t_function(self, y, m):
         return y * self.teta_function(m) - self.beta_function(m)
+
+    def d_function(self, y, m):
+        return 2 * (self.t_function(y, y) - self.t_function(y, m))
+
+    def beta_function_derivative(self, m, teta_function_derivative):
+        return self.teta_function(m)
 
     def count(self, y, std, mean):
         return math.exp(self.count_log(y, std, mean))
@@ -167,6 +179,74 @@ class ExponentialDistribution(ExponentialFamilyDistribution):
         plt.savefig(f'{path}{name}.{format}')
 
 
+class PoissonDistribution(ExponentialFamilyDistribution):
+    def teta_function(self, lambda_p):
+        return math.log(lambda_p)  # ln(l)
+
+    def alfa_function(self, f):
+        return 1
+
+    def beta_function(self, lambda_p):
+        # return math.exp(self.teta_function(lambda_p))
+        return lambda_p  # exp(teta_function(lambda_p)) -> exp(ln(l)) -> l
+
+    def constant_function(self, y, f):
+        return -math.log(math.factorial(y))  # -ln(y!)
+
+    def t_function(self, y, lambda_p):
+        return y * self.teta_function(lambda_p) - self.beta_function(lambda_p)
+
+    def d_function(self, y, lambda_p):
+        return 2 * (self.t_function(y, y) - self.t_function(y, lambda_p))
+
+    def count(self, y, lambda_p):
+        return math.exp(self.count_log(y, lambda_p))
+
+    def count_log(self, y, lambda_p):
+        return self.alfa_function(None) * self.t_function(y, lambda_p) + self.constant_function(y, None)
+
+    def plot_count_function(self, lambda_p=1.0, path="", format="png", range_y=range(0, 12)):
+        name = f"poisson_distribution_plot_with_lambda_{lambda_p}"
+        plt.figure()
+        plt.grid(True, which='both', linestyle='-', linewidth=1)
+        res = [self.count(
+            y=y,
+            lambda_p=lambda_p
+        ) for y in range_y]
+        plt.scatter(range_y, res, color="black")
+        plt.plot(range_y, res, color="black")
+        plt.title(name)
+        plt.xlabel('Y')
+        plt.ylabel('X')
+        plt.savefig(f'{path}{name}.{format}')
+
+    def plot_t_function_lambda_p_change_2d(self, y=0.0, path="", format="png", range_lambda_p=range(0, 12)):
+        name = f"poisson_distribution_t_function_plot_with_static_y_{y}_lambda_from_{range_lambda_p[0]}_to_{range_lambda_p[-0]}"
+        plt.figure()
+        plt.grid(True, which='both', linestyle='-', linewidth=1)
+        plt.plot(range_lambda_p, [self.t_function(
+            y=y,
+            lambda_p=lambda_p
+        ) for lambda_p in range_lambda_p], color="black")
+        plt.title(name)
+        plt.xlabel('Y')
+        plt.ylabel('X')
+        plt.savefig(f'{path}{name}.{format}')
+
+    def plot_d_function_lambda_p_change_2d(self, y=0.0, path="", format="png", range_lambda_p=range(0, 12)):
+        name = f"poisson_distribution_d_function_plot_with_static_y_{y}_lambda_from_{range_lambda_p[0]}_to_{range_lambda_p[-0]}"
+        plt.figure()
+        plt.grid(True, which='both', linestyle='-', linewidth=1)
+        plt.plot(range_lambda_p, [self.d_function(
+            y=y,
+            lambda_p=lambda_p
+        ) for lambda_p in range_lambda_p], color="black")
+        plt.title(name)
+        plt.xlabel('Y')
+        plt.ylabel('X')
+        plt.savefig(f'{path}{name}.{format}')
+
+
 if __name__ == '__main__':
     # nd = NormalDistribution()
     # # nd.plot_count_function(
@@ -192,25 +272,39 @@ if __name__ == '__main__':
     # #     y=0.01,
     # #     m=20
     # # ))
+    #
+    # ed = ExponentialDistribution()
+    #
+    # # ed.plot_count_function(
+    # #     lambda_p=1.0,
+    # #     range_y=float_range(0.0, 5.0, 0.01)
+    # # )
+    # # ed.plot_t_function(
+    # #     lambda_p=1.0,
+    # #     range_y=float_range(0.0, 2.0, 0.01)
+    # # )
+    # # ed.plot_t_function_lambda_p_change_2d(
+    # #     y=2.0,
+    # #     range_lambda_p=float_range(0.1, 5.0, 0.01)
+    # # )
+    # ed.plot_d_function_lambda_p_change_2d(
+    #     y=0.2,
+    #     range_lambda_p=float_range(0.1, 25.0, 0.01)
+    # )
 
-    ed = ExponentialDistribution()
-
-    # ed.plot_count_function(
-    #     lambda_p=1.0,
-    #     range_y=float_range(0.0, 5.0, 0.01)
-    # )
-    # ed.plot_t_function(
-    #     lambda_p=1.0,
-    #     range_y=float_range(0.0, 2.0, 0.01)
-    # )
-    # ed.plot_t_function_lambda_p_change_2d(
-    #     y=2.0,
-    #     range_lambda_p=float_range(0.1, 5.0, 0.01)
-    # )
-    ed.plot_d_function_lambda_p_change_2d(
-        y=0.2,
-        range_lambda_p=float_range(0.1, 25.0, 0.01)
+    pd = PoissonDistribution()
+    pd.plot_count_function(
+        lambda_p=0.5,
+        range_y=range(0, 15)
     )
+    # pd.plot_t_function_lambda_p_change_2d(
+    #     y=5.0,
+    #     range_lambda_p=float_range(0.01, 40.0, 0.01)
+    # )
+    # pd.plot_d_function_lambda_p_change_2d(
+    #     y=5,
+    #     range_lambda_p=float_range(0.1, 30.0, 0.01)
+    # )
 
 
 

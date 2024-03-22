@@ -1,18 +1,32 @@
 import copy
+import math
+
 import matplotlib.pyplot as plt
+
+from models.ExponentialFamilyDistribution import *
 from models.MachineLearningModel import *
 from utils.extrection import *
 
 
 class GeneralizedLinearRegressionModel(MachineLearningModel):
-    def __init__(self):
+    def __init__(self, distribution: NormalDistribution, link_function=lambda x: x, derivative_of_linear_link_prediction_function_with_respect_to_bn=None):
         super().__init__()
+        self.link_function = link_function
+        self.distribution = distribution
         self.b_params = []
+
+        if derivative_of_linear_link_prediction_function_with_respect_to_bn is None:
+            self.derivative_of_linear_link_prediction_function_with_respect_to_bn = lambda respect_to_bn, xs, b_params: self.first_derivative_of_linear_prediction_function(respect_to_bn=respect_to_bn, xs=xs)
+        else:
+            self.derivative_of_linear_link_prediction_function_with_respect_to_bn = lambda respect_to_bn, xs, b_params: derivative_of_linear_link_prediction_function_with_respect_to_bn(respect_to_bn=respect_to_bn, xs=xs, b_params=b_params)
 
     def update_params_recording_dataset(self, data_necessity_type: DataNecessityType = DataNecessityType.TRAINING):
         dataset_with_defined_data_necessity_type = self.dataset.get(data_necessity_type)
         number_of_x_params = dataset_with_defined_data_necessity_type.shape[0]
         self.b_params = [0.0 for _ in range(number_of_x_params+1)]
+
+    def update_link_function(self, function):
+        self.link_function = lambda x: function(x)
 
     def learn(self, epochs: int, learning_factor: Optional[float] = None, data_necessity_type: DataNecessityType = DataNecessityType.TRAINING, epoch_history_save_interval=10):
         dataset_with_defined_data_necessity_type = self.dataset.get(data_necessity_type)
@@ -54,36 +68,54 @@ class GeneralizedLinearRegressionModel(MachineLearningModel):
                 index_to_extract=i
             )
 
-            result += self.one_derivative_calculation_iteration_on_loss_with_respect_to_bn(
+            result += self.d_function_derivative(
                 respect_to_bn=respect_to_bn,
                 xs=xs,
                 y=y,
                 b_params=b_params
             )
-        return (2 / n) * result
+        return result
 
     @staticmethod
     def second_derivative_on_loss_with_respect_to_bn(respect_to_bn: int, dataset_with_defined_data_necessity_type: DataSetObject):
-        n = dataset_with_defined_data_necessity_type.data_len
-        if respect_to_bn != 0:
-            sum_der_result = 0
-            for i in range(n):
-                xs = extract_values_by_index(
-                    data=dataset_with_defined_data_necessity_type.input_data,
-                    index_to_extract=i
-                )
+        # n = dataset_with_defined_data_necessity_type.data_len
+        # if respect_to_bn != 0:
+        #     sum_der_result = 0
+        #     for i in range(n):
+        #         xs = extract_values_by_index(
+        #             data=dataset_with_defined_data_necessity_type.input_data,
+        #             index_to_extract=i
+        #         )
+        #
+        #         sum_der_result += (xs[respect_to_bn - 1] ** (2 * respect_to_bn))
+        # else:
+        #     sum_der_result = n
+        # return (2 / n) * sum_der_result
+        return 1
 
-                sum_der_result += (xs[respect_to_bn - 1] ** (2 * respect_to_bn))
-        else:
-            sum_der_result = n
-        return (2 / n) * sum_der_result
+    # def one_derivative_calculation_iteration_on_loss_with_respect_to_bn(self, respect_to_bn: int, xs: List[float], y: float, b_params: [float]):
+    #     derivative_of_function_inside = self.first_derivative_of_linear_prediction_function(
+    #         respect_to_bn=respect_to_bn,
+    #         xs=xs
+    #     )
+    #     return ((self.prediction_function(
+    #         xs=xs,
+    #         b_params=b_params
+    #     ) - y) * derivative_of_function_inside)
 
-    def one_derivative_calculation_iteration_on_loss_with_respect_to_bn(self, respect_to_bn: int, xs: List[float], y: float, b_params: [float]):
-        derivative_of_function_inside = ((xs[respect_to_bn - 1] ** respect_to_bn) if respect_to_bn != 0 else 1)
-        return ((self.prediction_function(
-            xs=xs,
-            b_params=b_params
-        ) - y) * derivative_of_function_inside)
+    def d_function_derivative(self, respect_to_bn: int, xs: List[float], y: float, b_params: [float]):  # , y, m
+        return -2 * (y * (
+            self.derivative_of_linear_link_prediction_function_with_respect_to_bn(
+                respect_to_bn=respect_to_bn,
+                xs=xs,
+                b_params=b_params
+            )
+        ) - (
+            self.distribution.beta_function_derivative(
+                m=self.link_function(self.linear_prediction_function(xs=xs, b_params=b_params)),
+                teta_function_derivative=None
+            )
+        ))
 
     def predict(self, xs: List[float]):
         return self.prediction_function(
@@ -120,7 +152,7 @@ class GeneralizedLinearRegressionModel(MachineLearningModel):
             ))
 
     def __str__(self):
-        return f"<LinearRegressionModel | {self.prediction_function_str()}>"
+        return f"<GeneralizedLinearRegressionModel | {self.prediction_function_str()}>"
 
     def loss_function(self, data_necessity_type: DataNecessityType, b_params: [float]):
         e = 0
@@ -136,12 +168,22 @@ class GeneralizedLinearRegressionModel(MachineLearningModel):
                 b_params=b_params
             )
             # e += (predicted_y - point_y) ** 2
-            e += t_function()
-        return e / n
+            e += self.distribution.d_function(point_y, predicted_y)
+        return e  # e / n
+
+    # def derivative_of_linear_link_prediction_function_with_respect_to_bn(self, xs: [float], b_params: [float]):
+    #     return self.link_function(self.linear_prediction_function(xs=xs, b_params=b_params))
+
+    def prediction_function(self, xs: [float], b_params: [float]):
+        return self.link_function(self.linear_prediction_function(xs=xs, b_params=b_params))
 
     @staticmethod
-    def prediction_function(xs: [float], b_params: [float]):
+    def linear_prediction_function(xs: [float], b_params: [float]):
         return sum([(bn*(xs[i-1] ** i) if i != 0 else bn) for (i, bn) in enumerate(b_params)])
+
+    @staticmethod
+    def first_derivative_of_linear_prediction_function(respect_to_bn: int, xs: List[float]):
+        return (xs[respect_to_bn - 1] ** respect_to_bn) if respect_to_bn != 0 else 1
 
     def prediction_function_str(self, params: [float] = None):
         if params is None:
@@ -151,13 +193,13 @@ class GeneralizedLinearRegressionModel(MachineLearningModel):
 
     @staticmethod
     def _prediction_function_str(params: [float]):
-        function_str = "y = "
+        function_str = "y = LinkFunction("
         for i, param in enumerate(params):
             if i == 0:
                 function_str += f"{param}"
             else:
                 function_str += f" + {param}*D{f'^{i}' if i != 1 else ''}"
-        return function_str
+        return function_str + ")"
 
     def update_data(self,
             training_input: Optional[Dict[str, List[float]]] = None,
@@ -202,11 +244,27 @@ class GeneralizedLinearRegressionModel(MachineLearningModel):
     #     plt.ylabel('Y')
     #     plt.savefig(f'{name}.{format}')
     #
-    # # def plot_performance(self, x_data, y_data, dimension, name, format="png", range=range(0, 12)):
-    # #     plt.figure()
-    # #     plt.scatter(x_data, y_data, color='red')
-    # #     plt.plot(range, [b1*x + b0 for x in range], color="black")
-    # #     plt.title(name)
-    # #     plt.xlabel('Experience in years')
-    # #     plt.ylabel('Salary')
-    # #     plt.savefig(f'{name}.{format}')
+    # def plot_performance(self, x_data, y_data, dimension, name, format="png", range=range(0, 12)):
+    #     plt.figure()
+    #     plt.scatter(x_data, y_data, color='red')
+    #     plt.plot(range, [self.prediction_function(xs=xs,b_params=b_params) for x in range], color="black")
+    #     plt.title(name)
+    #     plt.xlabel('Experience in years')
+    #     plt.ylabel('Salary')
+    #     plt.savefig(f'{name}.{format}')
+
+
+    @staticmethod
+    def plot_performance(x_data, y_data, b0, b1, name, format="png"):
+        # min_point = int(min(min(x_data), min(y_data)))
+        # max_point = int(max(max(x_data), max(y_data)))
+        min_point = int(min(x_data))
+        max_point = int(max(x_data))
+        r = range(min_point, max_point)
+        plt.figure()
+        plt.scatter(x_data, y_data, color='red')
+        plt.plot(r, [math.exp(b1*x + b0) for x in r], color="black")
+        plt.title(name)
+        plt.xlabel('X')
+        plt.ylabel('Y')
+        plt.savefig(f'{name}.{format}')
