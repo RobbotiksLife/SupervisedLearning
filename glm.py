@@ -106,6 +106,7 @@ def custom_x_y_dataset_data_test_2():
         name="b0_loss_dependency_derivative_glm_custom_x_y_dataset_data_test_2_poisson_exp"
     )
 
+
 def sales_data():
     # %% load data
     dataset = pd.read_csv('datasets/Salary_Data.csv')

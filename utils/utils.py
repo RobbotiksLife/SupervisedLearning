@@ -1,5 +1,9 @@
 from fractions import Fraction
+import numpy as np
 
+
+def sigmoid(x):
+    return 1 / (1 + np.exp(-x))
 
 def find_multiplier(num):
     # Convert the float to a Fraction object to access numerator and denominator
